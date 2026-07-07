@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/dashboard-preview.png" alt="Dashboard Preview" width="800">
+  <img src="https://raw.githubusercontent.com/moiz120/code-review-assistant/main/assets/dashboard.png" alt="Dashboard Preview" width="800">
 </p>
 
 ---
@@ -302,11 +302,11 @@ Interactive API docs available at:
 ## Screenshots
 
 <p align="center">
-  <img src="assets/screenshot-dashboard.png" alt="Dashboard" width="700">
+  <img src="https://raw.githubusercontent.com/moiz120/code-review-assistant/main/assets/dashboard.png" alt="Dashboard" width="700">
 </p>
 
 <p align="center">
-  <img src="assets/screenshot-results.png" alt="Review Results" width="700">
+  <img src="https://raw.githubusercontent.com/moiz120/code-review-assistant/main/assets/dashboard.png" alt="Review Results" width="700">
 </p>
 
 ---
