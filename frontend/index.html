@@ -1,0 +1,656 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Review Assistant | AI-Powered Code Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0c0f17;
+            --bg-secondary: #13161f;
+            --bg-tertiary: #1a1e2a;
+            --bg-card: #161922;
+            --border-color: #252a38;
+            --border-hover: #2f3547;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-teal: #2dd4bf;
+            --accent-cyan: #38bdf8;
+            --accent-green: #34d399;
+            --accent-amber: #fbbf24;
+            --accent-red: #fb7185;
+            --accent-purple: #a78bfa;
+            --btn-bg: #0d9488;
+            --btn-hover: #14b8a6;
+            --critical: #ef4444;
+            --high: #f59e0b;
+            --medium: #3b82f6;
+            --low: #6b7280;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo {
+            width: 34px;
+            height: 34px;
+            background: var(--accent-teal);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--bg-primary);
+        }
+        .header-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .header-spacer { flex: 1; }
+        .header-badge {
+            background: rgba(45, 212, 191, 0.1);
+            border: 1px solid rgba(45, 212, 191, 0.2);
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: var(--accent-teal);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .header-badge::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            background: var(--accent-teal);
+            border-radius: 50%;
+        }
+
+        /* ===== MAIN ===== */
+        .main {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 32px 28px;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 28px;
+        }
+        @media (max-width: 960px) {
+            .main { grid-template-columns: 1fr; }
+        }
+
+        /* ===== CARD ===== */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-header h2 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .card-body {
+            padding: 20px;
+        }
+
+        /* ===== FORM ===== */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.88rem;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent-teal);
+        }
+        .form-textarea {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            line-height: 1.6;
+            min-height: 300px;
+            resize: vertical;
+        }
+        .form-select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%2394a3b8' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+        }
+
+        /* ===== BUTTON ===== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--btn-bg);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: var(--btn-hover); }
+        .btn:disabled {
+            background: var(--bg-tertiary);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        /* ===== RESULTS ===== */
+        .results-panel { display: none; }
+        .results-panel.active { display: block; }
+
+        .score-section {
+            text-align: center;
+            padding: 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .score-circle {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background: conic-gradient(var(--accent-teal) var(--score-deg, 0deg), var(--bg-tertiary) 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            position: relative;
+        }
+        .score-circle::before {
+            content: "";
+            position: absolute;
+            width: 88px;
+            height: 88px;
+            background: var(--bg-card);
+            border-radius: 50%;
+        }
+        .score-value {
+            position: relative;
+            font-size: 1.8rem;
+            font-weight: 700;
+            z-index: 1;
+        }
+        .score-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .score-grade {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+        .grade-a { background: rgba(52, 211, 153, 0.12); color: var(--accent-green); }
+        .grade-b { background: rgba(56, 189, 248, 0.12); color: var(--accent-cyan); }
+        .grade-c { background: rgba(251, 191, 36, 0.12); color: var(--accent-amber); }
+        .grade-f { background: rgba(251, 113, 133, 0.12); color: var(--accent-red); }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-critical { color: var(--critical); }
+        .stat-high { color: var(--high); }
+        .stat-medium { color: var(--medium); }
+        .stat-low { color: var(--low); }
+        .stat-total { color: var(--accent-purple); }
+
+        /* Comments */
+        .comments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .comment-item {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            position: relative;
+            padding-left: 20px;
+        }
+        .comment-item::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            border-radius: 3px 0 0 3px;
+        }
+        .comment-item.critical::before { background: var(--critical); }
+        .comment-item.high::before { background: var(--high); }
+        .comment-item.medium::before { background: var(--medium); }
+        .comment-item.low::before { background: var(--low); }
+
+        .comment-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        .comment-badge {
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge-critical { background: rgba(239, 68, 68, 0.1); color: var(--critical); }
+        .badge-high { background: rgba(245, 158, 11, 0.1); color: var(--high); }
+        .badge-medium { background: rgba(59, 130, 246, 0.1); color: var(--medium); }
+        .badge-low { background: rgba(107, 114, 128, 0.1); color: var(--low); }
+        .comment-category {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+        .comment-file {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.76rem;
+            color: var(--accent-teal);
+            margin-bottom: 6px;
+            opacity: 0.85;
+        }
+        .comment-message {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--text-muted);
+        }
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        .empty-state h3 {
+            font-size: 1.05rem;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        /* Loading */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(12, 15, 23, 0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .loading-overlay.active { display: flex; }
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-teal);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text {
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+        }
+
+        /* Error */
+        .error-toast {
+            display: none;
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--critical);
+            padding: 16px 20px;
+            border-radius: 10px;
+            max-width: 380px;
+            z-index: 1001;
+        }
+        .error-toast.active { display: block; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">CR</div>
+            <div class="header-title">Code Review Assistant</div>
+            <div class="header-spacer"></div>
+            <div class="header-badge">API Online</div>
+        </div>
+    </header>
+
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <div class="loading-text">Analyzing code with AST + RAG + LLM...</div>
+    </div>
+
+    <div id="errorToast" class="error-toast"></div>
+
+    <main class="main">
+        <div class="left-column">
+            <div class="card">
+                <div class="card-header">
+                    <span>&#128196;</span>
+                    <h2>Code Input</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label" for="filename">File Name</label>
+                        <input type="text" id="filename" class="form-input" value="auth.py" placeholder="e.g., auth.py">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="code">Source Code</label>
+                        <textarea id="code" class="form-textarea" placeholder="Paste your Python code here...">password = "secret123"
+import os
+os.system("rm -rf /")
+
+def authenticate(user, pwd):
+    try:
+        query = "SELECT * FROM users WHERE name='" + user + "'"
+        exec(query)
+    except:
+        pass
+    return True</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="style">Review Style</label>
+                        <select id="style" class="form-select">
+                            <option value="strict">Strict - Catch everything</option>
+                            <option value="balanced" selected>Balanced - Recommended</option>
+                            <option value="lenient">Lenient - Major issues only</option>
+                        </select>
+                    </div>
+                    <button class="btn" id="reviewBtn" onclick="reviewCode()">
+                        <span>&#128269;</span>
+                        Analyze Code
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-column">
+            <div id="emptyState" class="card">
+                <div class="empty-state">
+                    <div class="empty-state-icon">&#128221;</div>
+                    <h3>Ready to Review</h3>
+                    <p>Paste your code and click "Analyze Code" to get AI-powered review comments.</p>
+                </div>
+            </div>
+
+            <div id="resultsPanel" class="results-panel">
+                <div class="score-section">
+                    <div class="score-circle" id="scoreCircle">
+                        <span class="score-value" id="scoreValue">--</span>
+                    </div>
+                    <div class="score-label">Code Quality Score</div>
+                    <div class="score-grade" id="scoreGrade">--</div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value stat-total" id="totalCount">0</div>
+                        <div class="stat-label">Total Issues</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value stat-critical" id="criticalCount">0</div>
+                        <div class="stat-label">Critical</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value stat-high" id="highCount">0</div>
+                        <div class="stat-label">High</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value stat-medium" id="mediumCount">0</div>
+                        <div class="stat-label">Medium</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span>&#128172;</span>
+                        <h2>Review Comments</h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="commentsList" class="comments-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        Code Review Assistant &mdash; Powered by AST Analysis + RAG + Groq LLM
+    </footer>
+
+    <script>
+        async function reviewCode() {
+            var filename = document.getElementById("filename").value.trim();
+            var code = document.getElementById("code").value;
+            var style = document.getElementById("style").value;
+            var btn = document.getElementById("reviewBtn");
+
+            if (!code.trim()) {
+                showError("Please enter some code to review.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = "<span>Analyzing...</span>";
+            document.getElementById("loadingOverlay").classList.add("active");
+            hideError();
+
+            try {
+                var response = await fetch("http://localhost:8000/api/v1/review", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        pr_payload: {
+                            pr_number: 1,
+                            repository: "demo",
+                            owner: "demo",
+                            title: "Code Review",
+                            branch: "main",
+                            base_branch: "main",
+                            author: "developer",
+                            changes: [{
+                                filename: filename || "untitled.py",
+                                status: "modified",
+                                additions: code.split("\n").length,
+                                new_content: code
+                            }]
+                        },
+                        review_style: style
+                    })
+                });
+
+                var data = await response.json();
+                if (!response.ok) throw new Error(data.detail || "Review failed");
+                displayResults(data);
+            } catch (err) {
+                showError(err.message);
+                btn.disabled = false;
+                btn.innerHTML = "<span>&#128269;</span> Analyze Code";
+            } finally {
+                document.getElementById("loadingOverlay").classList.remove("active");
+            }
+        }
+
+        function displayResults(data) {
+            var btn = document.getElementById("reviewBtn");
+            btn.disabled = false;
+            btn.innerHTML = "<span>&#128269;</span> Analyze Code";
+
+            document.getElementById("emptyState").style.display = "none";
+            document.getElementById("resultsPanel").classList.add("active");
+
+            var score = data.overall_score || 0;
+            document.getElementById("scoreValue").textContent = score;
+            document.getElementById("scoreCircle").style.setProperty("--score-deg", (score / 100 * 360) + "deg");
+
+            var gradeClass = "grade-f", gradeText = "Needs Work";
+            if (score >= 90) { gradeClass = "grade-a"; gradeText = "Excellent"; }
+            else if (score >= 70) { gradeClass = "grade-b"; gradeText = "Good"; }
+            else if (score >= 50) { gradeClass = "grade-c"; gradeText = "Fair"; }
+            document.getElementById("scoreGrade").className = "score-grade " + gradeClass;
+            document.getElementById("scoreGrade").textContent = gradeText;
+
+            var comments = data.comments || [];
+            var critical = 0, high = 0, medium = 0, low = 0;
+            for (var i = 0; i < comments.length; i++) {
+                var sev = comments[i].severity;
+                if (sev === "critical") critical++;
+                else if (sev === "high") high++;
+                else if (sev === "medium") medium++;
+                else if (sev === "low") low++;
+            }
+
+            document.getElementById("totalCount").textContent = comments.length;
+            document.getElementById("criticalCount").textContent = critical;
+            document.getElementById("highCount").textContent = high;
+            document.getElementById("mediumCount").textContent = medium;
+
+            var list = document.getElementById("commentsList");
+            list.innerHTML = "";
+
+            if (comments.length === 0) {
+                list.innerHTML = "<div class=\"empty-state\"><div class=\"empty-state-icon\">&#127881;</div><h3>Clean Code!</h3><p>No issues detected.</p></div>";
+            } else {
+                for (var j = 0; j < comments.length; j++) {
+                    var c = comments[j];
+                    var div = document.createElement("div");
+                    div.className = "comment-item " + c.severity;
+                    var badgeClass = "badge-" + c.severity;
+                    var sevText = c.severity.toUpperCase();
+                    var catText = (c.category || "UNKNOWN").toUpperCase();
+                    var lineText = c.line_number ? ":" + c.line_number : "";
+                    var html = "<div class=\"comment-header\"><span class=\"comment-badge " + badgeClass + "\">" + sevText + "</span><span class=\"comment-category\">" + catText + "</span></div>";
+                    html += "<div class=\"comment-file\">" + escapeHtml(c.file_path) + escapeHtml(lineText) + "</div>";
+                    html += "<div class=\"comment-message\">" + escapeHtml(c.message) + "</div>";
+                    div.innerHTML = html;
+                    list.appendChild(div);
+                }
+            }
+        }
+
+        function showError(msg) {
+            var toast = document.getElementById("errorToast");
+            toast.textContent = msg;
+            toast.classList.add("active");
+            setTimeout(function() { toast.classList.remove("active"); }, 5000);
+        }
+        function hideError() {
+            document.getElementById("errorToast").classList.remove("active");
+        }
+        function escapeHtml(text) {
+            var div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

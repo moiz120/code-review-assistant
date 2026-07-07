@@ -1,0 +1,11 @@
+﻿__pycache__/
+*.py[cod]
+*.class
+*.so
+venv/
+.env
+*.log
+data/vector_store/
+*.faiss
+*.pkl
+.DS_Store

@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ../data:/app/data
+      - ../models:/app/models
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  github-webhook:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.webhook
+    ports:
+      - "8001:8001"
+    environment:
+      - API_BASE_URL=http://api:8000/api/v1
+      - GITHUB_APP_ID=${GITHUB_APP_ID}
+      - GITHUB_PRIVATE_KEY_PATH=/app/github-app-private-key.pem
+      - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
+    volumes:
+      - ../github-app-private-key.pem:/app/github-app-private-key.pem:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  redis_data:
